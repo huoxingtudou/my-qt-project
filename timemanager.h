@@ -20,13 +20,15 @@ public:
         if(m_time==time)return;
         m_time = time;
         // qDebug()<<"时间管理类的时间"+time;
-        qDebug()<<QThread::currentThread();
+        // qDebug()<<QThread::currentThread();
         emit timeChanged();
     }
     // void updateTime(QString time);
 
 signals:
     void timeChanged();
+public slots:
+    void timeReceive();
 private:
     QString m_time;
 

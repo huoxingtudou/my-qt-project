@@ -6,6 +6,8 @@
 #include <QQmlContext>
 #include <QPermissions>
 #include "timemanager.h"
+#include "serialportmanager.h"
+#include "timethread.h"
 
 
 int main(int argc, char *argv[])
@@ -22,8 +24,11 @@ int main(int argc, char *argv[])
     // qmlRegisterType<TimeManager>("timeMoudle",1,0,"TimeManager");
     QQmlApplicationEngine engine;
 
-    TimeManager *timeManager = new TimeManager(&engine);
+    TimeManager *timeManager = new TimeManager(&app);
     engine.rootContext()->setContextProperty("timeManager",timeManager);
+
+    SerialPortManager *serialManager =new SerialPortManager(&app);
+    engine.rootContext()->setContextProperty("serialManager",serialManager);
 
     //1.创建ImageProvider实例，并注册到QML引擎
     CameraImageProvider *imageProvider = new CameraImageProvider();
@@ -34,17 +39,13 @@ int main(int argc, char *argv[])
     CameraThread *cameraThread = new CameraThread(imageProvider,timeManager);
 
 
+
     //3.连接调试信号，用于在控制台输出状态
 
     QObject::connect(cameraThread,&CameraThread::statusChanged,
                      [](const QString &msg){ qDebug()<<msg ;});
 
-    // QObject::connect(cameraThread, &CameraThread::newImageReady,
-    //                  [imageProvider](const QImage &img) {
-    //                      static int count = 0;
-    //                      qDebug() << "【主线程】收到图像信号 #" << ++count << "，尺寸：" << img.size();
-    //                      imageProvider->updateImage(img);
-    //                  });
+
 
     QCameraPermission cameraPermission;
     qApp->requestPermission(cameraPermission, [cameraThread](const QPermission &permission) {
@@ -57,8 +58,8 @@ int main(int argc, char *argv[])
         }
     });
 
-
-
+    timeThread *timethread = new timeThread(timeManager);
+    timethread->start();
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));
     QObject::connect(
